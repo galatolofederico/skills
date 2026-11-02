@@ -46,12 +46,14 @@ To replace existing copies in the destination:
 
 ```bash
 git clone https://github.com/galatolofederico/skills.git
+mkdir -p ~/.config/opencode/skills
 cp -R skills/skills/* ~/.config/opencode/skills/
 ```
 
 Or copy just one:
 
 ```bash
+mkdir -p ~/.config/opencode/skills
 cp -R skills/skills/grill-me-gui ~/.config/opencode/skills/
 ```
 
