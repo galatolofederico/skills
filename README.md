@@ -55,7 +55,7 @@ To update existing copies in place and refresh `~/.local/bin/tg`:
 ./install.sh --force
 ```
 
-`--force` updates each skill wherever it is already installed in the two known roots, and refreshes the `tg` binary. If a skill exists in both roots, the installer stops with an error; remove the unwanted copy first.
+`--force` updates each skill wherever it is already installed in the two known roots, and refreshes the `tg` binary. If a skill exists in both roots, the installer prints an error for that skill and leaves it alone; remove the unwanted copy first.
 
 ### Manual
 
