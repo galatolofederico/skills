@@ -10,10 +10,11 @@ usage() {
   cat <<'EOF'
 Usage: ./install.sh [--force] [DEST]
 
-Copy the skills in ./skills into DEST (default: ~/.config/opencode/skills).
+Copy the skills in ./skills into DEST (default: ~/.config/opencode/skills)
+and install bin/tg to ~/.local/bin/tg.
 
 Options:
-  --force      Replace skills already present in DEST.
+  --force      Replace skills already present in DEST and the tg binary.
   -h, --help   Show this help.
 EOF
 }
@@ -90,6 +91,26 @@ for skill_dir in "$source_dir"/*/; do
   cp -R "$skill_dir" "$destination"
   echo "installed $name -> $destination"
 done
+
+tg_source="$repo_dir/bin/tg"
+tg_dest="$HOME/.local/bin/tg"
+
+if [ -f "$tg_source" ]; then
+  if [ -e "$tg_dest" ] && [ "$force" -ne 1 ]; then
+    echo "skip tg: already installed at $tg_dest (use --force to replace)"
+  else
+    mkdir -p "$(dirname "$tg_dest")"
+    install -m 755 "$tg_source" "$tg_dest"
+    echo "installed tg -> $tg_dest"
+  fi
+
+  case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) echo "warning: $HOME/.local/bin is not in PATH; add it to use tg" >&2 ;;
+  esac
+else
+  echo "warning: bin/tg not found; skipping the Telegram CLI" >&2
+fi
 
 echo
 echo "Done. OpenCode reloads skills automatically."

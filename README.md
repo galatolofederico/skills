@@ -2,6 +2,21 @@
 
 A portable collection of my OpenCode skills. Each skill is a folder with a `SKILL.md`; `grill-me-gui` also carries its HTML template and builder script.
 
+## Repo layout
+
+```text
+.
+├── README.md
+├── install.sh
+├── bin/
+│   └── tg
+└── skills/
+    ├── commit/
+    ├── phase-orchestrator/
+    ├── tg-telegram/
+    └── grill-me-gui/
+```
+
 ## Skills
 
 | Skill | Invocation | What it does |
@@ -28,29 +43,30 @@ cd skills
 ./install.sh
 ```
 
-The installer defaults to `~/.config/opencode/skills` and skips any skill already present in either root. To choose the other root:
+The installer copies the four skills into `~/.config/opencode/skills` by default, installs the `tg` CLI to `~/.local/bin/tg` when it is not already there, and skips any skill already present in either skill root. To choose the other skill root:
 
 ```bash
 ./install.sh ~/.agents/skills
 ```
 
-To replace existing copies in the destination:
+To replace existing copies in the destination and refresh `~/.local/bin/tg`:
 
 ```bash
 ./install.sh --force
 ```
 
-`--force` only replaces the matching folders in the destination; it does not touch the other root. If the same name exists in both roots, remove the unwanted copy.
+`--force` only replaces matching skill folders in the destination and the `tg` binary. It does not touch the other skill root. If the same skill name exists in both roots, remove the unwanted copy.
 
 ### Manual
 
 ```bash
 git clone https://github.com/galatolofederico/skills.git
-mkdir -p ~/.config/opencode/skills
+mkdir -p ~/.config/opencode/skills ~/.local/bin
 cp -R skills/skills/* ~/.config/opencode/skills/
+install -m 755 bin/tg ~/.local/bin/tg
 ```
 
-Or copy just one:
+Or copy just one skill:
 
 ```bash
 mkdir -p ~/.config/opencode/skills
@@ -59,10 +75,21 @@ cp -R skills/skills/grill-me-gui ~/.config/opencode/skills/
 
 OpenCode reloads skill directories automatically; if a picker was already open, reopen it.
 
+### Telegram CLI
+
+`tg-telegram` expects the `tg` command in `PATH`. The installer copies `bin/tg` to `~/.local/bin/tg` when it is not already present. To install it manually:
+
+```bash
+mkdir -p ~/.local/bin
+install -m 755 bin/tg ~/.local/bin/tg
+```
+
+Make sure `~/.local/bin` is in `PATH`. Then run `tg init` once; it stores the bot token and chat ID in `~/.tg.conf` on that machine.
+
 ## Requirements
 
 - `commit` — `git` in `PATH`.
-- `tg-telegram` — the `tg` CLI in `PATH`, plus `curl` and `jq`. Run `tg init` once to create `~/.tg.conf`.
+- `tg-telegram` — `tg` in `PATH` (installed by `install.sh`), plus `curl` and `jq`. Run `tg init` once to create `~/.tg.conf`.
 - `phase-orchestrator` — no extra tooling; its generated prompt can use `tg-telegram` for notifications.
 - `grill-me-gui` — Python 3 and a browser. The generated pages are static and need no server. It also uses the `grilling` skill from `mattpocock/skills`; install that separately if it is not already available.
 
@@ -80,5 +107,5 @@ git pull
 
 ## Notes
 
-- Skills are plain text. Keep secrets out of them; `tg-telegram` reads its bot token from `~/.tg.conf`, not from this repo.
-- The installer copies files. It does not create symlinks, so moving or deleting the clone later does not break the installed skills.
+- Skills and the `tg` script are plain text. No bot token, chat ID, or `~/.tg.conf` content is stored in this repo: `tg init` writes those only to `~/.tg.conf` on the local machine.
+- The installer copies files. It does not create symlinks, so moving or deleting the clone later does not break the installed skills or the `tg` command.

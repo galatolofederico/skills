@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONF="${TG_CONF:-$HOME/.tg.conf}"
+POLL_INTERVAL=2
+
+# --- helpers ---
+
+die() { echo "error: $*" >&2; exit 1; }
+
+cfg_read()  { [ -f "$CONF" ] && grep -m1 "^${1}=" "$CONF" 2>/dev/null | tail -1 | cut -d= -f2-; }
+cfg_write() {
+    if grep -q "^${1}=" "$CONF" 2>/dev/null; then
+        sed -i "s|^${1}=.*|${1}=${2}|" "$CONF"
+    else
+        echo "${1}=${2}" >> "$CONF"
+    fi
+}
+
+require() { command -v "$1" &>/dev/null || die "requires '$1' (not found in PATH)"; }
+
+api() {
+    local endpoint="$1"; shift
+    curl -sS "https://api.telegram.org/bot${TOKEN}/${endpoint}" "$@"
+}
+
+# --- commands ---
+
+cmd_init() {
+    require curl; require jq
+
+    printf "Enter your Telegram Bot Token: "
+    read -r TOKEN
+
+    # Validate token by calling getMe
+    local me
+    me=$(api getMe)
+    local username
+    username=$(echo "$me" | jq -r '.result.username // empty')
+    [ -n "$username" ] || die "invalid token (getMe failed: $me)"
+
+    # Save token
+    mkdir -p "$(dirname "$CONF")"
+    cfg_write TOKEN "$TOKEN"
+    echo "✓ Bot authenticated as @${username}"
+
+    echo ""
+    echo "Now send any message to your bot in Telegram."
+    echo "Waiting for incoming message to capture chat id..."
+
+    # Clear any pending updates first
+    local updates old_offset
+    old_offset=$(cfg_read OFFSET 2>/dev/null || echo 0)
+    updates=$(api getUpdates --data-urlencode "offset=${old_offset}" \
+                             --data-urlencode "timeout=30")
+    local max_id
+    max_id=$(echo "$updates" | jq '[.result[].update_id] | max // 0')
+    [ "$max_id" -gt 0 ] && cfg_write OFFSET $((max_id + 1))
+
+    # Now poll until we get a new message
+    while true; do
+        updates=$(api getUpdates --data-urlencode "offset=$(cfg_read OFFSET 0)" \
+                                 --data-urlencode "timeout=30")
+        local chat_id
+        chat_id=$(echo "$updates" | jq -r '[.result[].message | select(.chat.type=="private")] | .[0].chat.id // empty' 2>/dev/null)
+        if [ -n "$chat_id" ]; then
+            cfg_write CHAT_ID "$chat_id"
+            max_id=$(echo "$updates" | jq '[.result[].update_id] | max // 0')
+            cfg_write OFFSET $((max_id + 1))
+            echo "✓ Chat registered (id: ${chat_id})"
+            break
+        fi
+        # Skip any non-private updates
+        max_id=$(echo "$updates" | jq '[.result[].update_id] | max // 0')
+        [ "$max_id" -gt 0 ] && cfg_write OFFSET $((max_id + 1))
+    done
+
+    echo ""
+    echo "Configuration saved to ${CONF}"
+    echo "You're all set! Use: ./tg send 'hello'  or  ./tg recv 'hello'"
+}
+
+cmd_send() {
+    [ -z "${1:-}" ] && die "usage: ./tg send <message>"
+    local msg="$1"
+
+    TOKEN=$(cfg_read TOKEN) || die "not initialized (run: ./tg init)"
+    CHAT_ID=$(cfg_read CHAT_ID) || die "no chat registered (run: ./tg init)"
+
+    local result
+    result=$(api sendMessage --data-urlencode "chat_id=${CHAT_ID}" \
+                             --data-urlencode "text=${msg}")
+    local ok
+    ok=$(echo "$result" | jq -r '.ok')
+    [ "$ok" = "true" ] || die "sendMessage failed: $result"
+}
+
+cmd_recv() {
+    [ -z "${1:-}" ] && die "usage: ./tg recv <message>"
+    local msg="$1"
+
+    TOKEN=$(cfg_read TOKEN) || die "not initialized (run: ./tg init)"
+    CHAT_ID=$(cfg_read CHAT_ID) || die "no chat registered (run: ./tg init)"
+
+    # Send the message
+    cmd_send "$msg"
+
+    # Drain any old updates first
+    local updates max_id
+    updates=$(api getUpdates --data-urlencode "offset=$(cfg_read OFFSET 0)" \
+                             --data-urlencode "timeout=0")
+    max_id=$(echo "$updates" | jq '[.result[].update_id] | max // 0')
+    [ "$max_id" -gt 0 ] && cfg_write OFFSET $((max_id + 1))
+
+    # Busy-wait for a reply
+    echo "↻ Waiting for reply..."
+    while true; do
+        updates=$(api getUpdates --data-urlencode "offset=$(cfg_read OFFSET 0)" \
+                                 --data-urlencode "timeout=30")
+        # Look for a text message from our chat (but not from the bot itself)
+        local reply
+        reply=$(echo "$updates" | jq -r \
+            '.result[]
+             | select(.message.chat.id == '"${CHAT_ID}"')
+             | select(.message.from.is_bot == false)
+             | .message.text // empty' 2>/dev/null | head -1)
+
+        if [ -n "$reply" ]; then
+            echo "$reply"
+            max_id=$(echo "$updates" | jq '[.result[].update_id] | max // 0')
+            cfg_write OFFSET $((max_id + 1))
+            break
+        fi
+
+        # Advance offset even if no matching reply
+        max_id=$(echo "$updates" | jq '[.result[].update_id] | max // 0')
+        [ "$max_id" -gt 0 ] && cfg_write OFFSET $((max_id + 1))
+
+        sleep "$POLL_INTERVAL"
+    done
+}
+
+cmd_status() {
+    if [ ! -f "$CONF" ]; then
+        echo "✗ Not initialized"
+        echo "  Run: ./tg init"
+        return
+    fi
+
+    local token chat_id username
+    token=$(cfg_read TOKEN)
+    chat_id=$(cfg_read CHAT_ID)
+
+    if [ -z "$token" ]; then
+        echo "✗ Not initialized (no token)"
+        echo "  Run: ./tg init"
+        return
+    fi
+
+    # Try to reach the API and get bot info
+    require curl; require jq
+    local me
+    me=$(curl -sS "https://api.telegram.org/bot${token}/getMe") 2>/dev/null
+    username=$(echo "$me" | jq -r '.result.username // empty' 2>/dev/null)
+
+    if [ -n "$username" ]; then
+        echo "✓ Bot: @${username}"
+    else
+        echo "✗ Bot: token invalid or API unreachable"
+    fi
+
+    if [ -n "$chat_id" ]; then
+        echo "✓ Chat: ${chat_id}"
+    else
+        echo "✗ Chat: not registered (run: ./tg init)"
+    fi
+
+    echo "  Config: ${CONF}"
+}
+
+# --- main ---
+
+[ $# -eq 0 ] && die "usage: ./tg {init|send|recv|status} [args]"
+
+case "${1:-}" in
+    init)  cmd_init ;;
+    send)  shift; cmd_send "$@" ;;
+    recv)  shift; cmd_recv "$@" ;;
+    status) cmd_status ;;
+    *)     die "unknown command '${1}'. use: init, send, recv, status" ;;
+esac
