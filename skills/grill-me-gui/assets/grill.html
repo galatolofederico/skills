@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grill Me</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f2ec;
+    --glow: rgba(194, 65, 12, 0.10);
+    --surface: #fffdfa;
+    --surface-2: #fbf5ee;
+    --surface-3: #f4ebe1;
+    --border: #e7dcd0;
+    --border-strong: #d6c5b6;
+    --text: #231a15;
+    --muted: #75665b;
+    --accent: #c2410c;
+    --accent-strong: #9a3412;
+    --accent-soft: #ffedd5;
+    --accent-ink: #7c2d12;
+    --on-accent: #fffdfa;
+    --ok: #15803d;
+    --ok-soft: #dcfce7;
+    --danger: #b91c1c;
+    --danger-soft: #fee2e2;
+    --shadow: 0 1px 2px rgba(35, 26, 21, 0.04), 0 18px 48px -24px rgba(35, 26, 21, 0.28);
+    --radius: 18px;
+    --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-display: ui-serif, Georgia, "Times New Roman", serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14100e;
+      --glow: rgba(249, 115, 22, 0.09);
+      --surface: #1d1815;
+      --surface-2: #241d19;
+      --surface-3: #2d241f;
+      --border: #362c26;
+      --border-strong: #4b3b31;
+      --text: #f5ece5;
+      --muted: #b4a296;
+      --accent: #fb923c;
+      --accent-strong: #fdba74;
+      --accent-soft: #3a2012;
+      --accent-ink: #fed7aa;
+      --on-accent: #1a120d;
+      --ok: #4ade80;
+      --ok-soft: #14301f;
+      --danger: #f87171;
+      --danger-soft: #3b1717;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 24px 60px -28px rgba(0, 0, 0, 0.8);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(1000px 560px at 50% -12%, var(--glow), transparent 72%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  textarea {
+    font: inherit;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .page {
+    width: min(880px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 44px 0 84px;
+  }
+
+  .demo-banner {
+    margin-bottom: 18px;
+    border: 1px dashed color-mix(in srgb, var(--accent) 42%, var(--border));
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .demo-banner strong {
+    color: var(--accent-ink);
+  }
+
+  .demo-banner code {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+  }
+
+  .masthead {
+    margin-bottom: 30px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .flame {
+    width: 19px;
+    height: 19px;
+    flex: none;
+  }
+
+  .round-badge {
+    margin-left: auto;
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    border-radius: 999px;
+    padding: 3px 11px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  h1 {
+    margin: 20px 0 12px;
+    max-width: 18ch;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5.4vw, 3.2rem);
+    font-weight: 600;
+    line-height: 1.06;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+
+  .intro {
+    max-width: 70ch;
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 1.02rem;
+  }
+
+  .progress-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 22px;
+    align-items: end;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0 15px;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 7px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress-percent {
+    color: var(--accent);
+  }
+
+  .progress-track {
+    grid-column: 1;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--surface-3);
+  }
+
+  .progress-bar {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), #f59e0b);
+    transition: width 220ms ease;
+  }
+
+  .privacy {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    max-width: 20ch;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    text-align: right;
+  }
+
+  .questions {
+    display: grid;
+    gap: 18px;
+    margin-top: 26px;
+  }
+
+  .question {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    padding: 26px 26px 23px;
+    scroll-margin-top: 24px;
+  }
+
+  .q-head {
+    display: flex;
+    align-items: baseline;
+    gap: 13px;
+  }
+
+  .q-number {
+    flex: none;
+    border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+
+  .q-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.24rem, 2.6vw, 1.46rem);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+
+  .q-body {
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 0.96rem;
+  }
+
+  .q-body p {
+    margin: 0 0 11px;
+  }
+
+  .q-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .q-body ul {
+    margin: 4px 0 13px;
+    padding-left: 21px;
+  }
+
+  .q-body ol {
+    margin: 4px 0 13px;
+    padding-left: 23px;
+  }
+
+  .q-body li {
+    margin: 4px 0;
+  }
+
+  .q-body li::marker {
+    color: var(--accent);
+  }
+
+  .q-body strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .q-body code {
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    overflow-wrap: anywhere;
+  }
+
+  .recommendation {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 16px;
+    align-items: center;
+    margin-top: 18px;
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+    border-radius: 14px;
+    background: var(--accent-soft);
+    padding: 13px 15px;
+  }
+
+  .rec-label {
+    grid-column: 1 / -1;
+    color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  .rec-text {
+    margin: 0;
+    color: var(--accent-ink);
+    font-size: 0.94rem;
+    line-height: 1.55;
+  }
+
+  .use-rec {
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--surface) 62%, transparent);
+    color: var(--accent-ink);
+    padding: 7px 11px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 150ms ease, border-color 150ms ease, transform 100ms ease;
+  }
+
+  .use-rec:hover {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  .use-rec:active {
+    transform: translateY(1px);
+  }
+
+  .use-rec.applied {
+    border-color: var(--ok);
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+
+  .options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+  }
+
+  .options-label {
+    margin-right: 2px;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+
+  .option {
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text);
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    cursor: pointer;
+    transition: border-color 150ms ease, background 150ms ease, color 150ms ease, transform 100ms ease;
+  }
+
+  .option:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+  }
+
+  .option:active {
+    transform: translateY(1px);
+  }
+
+  .answer {
+    margin-top: 18px;
+  }
+
+  .answer-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 8px;
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .q-status {
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .q-status.answered {
+    color: var(--ok);
+  }
+
+  textarea {
+    display: block;
+    width: 100%;
+    min-height: 112px;
+    resize: none;
+    overflow-y: hidden;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--text);
+    padding: 12px 14px;
+    font-size: 1rem;
+    line-height: 1.55;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  }
+
+  textarea::placeholder {
+    color: var(--muted);
+    opacity: 0.68;
+  }
+
+  textarea:hover {
+    border-color: color-mix(in srgb, var(--accent) 36%, var(--border-strong));
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--surface);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 17%, transparent);
+  }
+
+  .finish {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px 28px;
+    margin-top: 26px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    padding: 25px 26px;
+  }
+
+  .finish h2 {
+    margin: 0 0 4px;
+    font-family: var(--font-display);
+    font-size: 1.34rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  .finish p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.93rem;
+  }
+
+  .finish-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+  }
+
+  .primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--on-accent);
+    padding: 12px 20px;
+    font-size: 0.94rem;
+    font-weight: 800;
+    letter-spacing: -0.005em;
+    cursor: pointer;
+    box-shadow: 0 10px 22px -12px color-mix(in srgb, var(--accent) 80%, transparent);
+    transition: background 150ms ease, transform 120ms ease, box-shadow 150ms ease;
+  }
+
+  .primary:hover {
+    background: var(--accent-strong);
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px -12px color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+
+  .primary:active {
+    transform: translateY(0);
+  }
+
+  .primary:disabled {
+    cursor: wait;
+    opacity: 0.65;
+    transform: none;
+  }
+
+  .primary.copied {
+    background: var(--ok);
+  }
+
+  .primary svg {
+    width: 17px;
+    height: 17px;
+    flex: none;
+  }
+
+  .hint {
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+
+  kbd {
+    display: inline-block;
+    border: 1px solid var(--border-strong);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    background: var(--surface-2);
+    padding: 0 5px;
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    line-height: 1.55;
+  }
+
+  .copy-note {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .copy-note:empty {
+    display: none;
+  }
+
+  .copy-note.warn {
+    color: var(--danger);
+  }
+
+  .colophon {
+    margin: 30px 0 0;
+    color: var(--muted);
+    font-size: 0.72rem;
+    text-align: center;
+    opacity: 0.8;
+  }
+
+  .fatal {
+    border: 1px solid var(--danger);
+    border-radius: var(--radius);
+    background: var(--danger-soft);
+    padding: 22px 24px;
+  }
+
+  .fatal h2 {
+    margin: 0 0 6px;
+    color: var(--danger);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+  }
+
+  .fatal p {
+    margin: 0;
+    color: var(--text);
+    font-size: 0.94rem;
+  }
+
+  .toast {
+    position: fixed;
+    z-index: 60;
+    left: 50%;
+    bottom: 26px;
+    max-width: calc(100% - 32px);
+    border-radius: 10px;
+    background: var(--text);
+    color: var(--surface);
+    padding: 10px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 14px);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  dialog {
+    width: min(760px, calc(100% - 32px));
+    max-height: calc(100vh - 48px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    color: var(--text);
+    padding: 24px;
+    overflow-y: auto;
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.5);
+  }
+
+  dialog::backdrop {
+    background: rgba(15, 10, 8, 0.55);
+    backdrop-filter: blur(2px);
+  }
+
+  dialog h2 {
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+
+  dialog p {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  dialog textarea {
+    min-height: 280px;
+    resize: vertical;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.55;
+    white-space: pre;
+  }
+
+  .dialog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .dialog-status {
+    flex: 1 1 220px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .dialog-status.ok {
+    color: var(--ok);
+  }
+
+  .secondary {
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--text);
+    padding: 10px 15px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  @media (max-width: 620px) {
+    .page {
+      width: min(100% - 22px, 880px);
+      padding-top: 26px;
+    }
+
+    .question {
+      padding: 21px 18px 19px;
+    }
+
+    .q-head {
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .recommendation {
+      grid-template-columns: 1fr;
+    }
+
+    .use-rec {
+      justify-self: start;
+    }
+
+    .finish {
+      padding: 21px 18px;
+    }
+
+    .finish-actions {
+      width: 100%;
+      align-items: stretch;
+    }
+
+    .primary {
+      width: 100%;
+    }
+
+    .hint {
+      text-align: center;
+    }
+
+    .progress-card {
+      grid-template-columns: 1fr;
+    }
+
+    .privacy {
+      grid-column: 1;
+      grid-row: auto;
+      max-width: none;
+      text-align: left;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <noscript>
+    <div class="demo-banner"><strong>JavaScript is required.</strong> This page renders the questions and copies the answers in your browser.</div>
+  </noscript>
+
+  <div id="demoBanner" class="demo-banner" hidden>
+    <strong>Template preview.</strong> This is the reusable shell. A real round is generated from JSON with
+    <code>scripts/build_page.py</code>. Try it: pick an option or write an answer, then copy at the bottom.
+  </div>
+
+  <header class="masthead">
+    <div class="brand">
+      <svg class="flame" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12.9 2.6c.4 3.1-1.2 4.7-2.6 6.3-1.7 1.9-2.8 3.5-2.8 5.9a5.8 5.8 0 0 0 11.6 0c0-2.1-.9-3.8-2.2-5.3-.9-1-2.2-2.2-2.8-4.3-.2-.8-.6-1.6-1.2-2.6Z" fill="currentColor"/>
+        <path d="M11.9 12.1c.3 1.4-.4 2.2-1 3-.7.9-1.2 1.7-1.2 2.7a3.1 3.1 0 0 0 3.1 3.1 3.2 3.2 0 0 0 3.2-3.2c0-1.4-.7-2.4-1.5-3.4-.5-.6-1.1-1.3-1.5-2.4-.3-.7-.6-1.1-1.1-1.6Z" fill="currentColor" opacity=".55"/>
+      </svg>
+      <span>Grill Me</span>
+      <span id="roundBadge" class="round-badge">Round 1</span>
+    </div>
+    <h1 id="topic">Untitled interview</h1>
+    <p id="intro" class="intro"></p>
+    <div class="progress-card">
+      <div class="progress-label">
+        <span id="progressText">0 of 0 answered</span>
+        <span id="progressPercent" class="progress-percent">0%</span>
+      </div>
+      <div class="progress-track" role="progressbar" aria-labelledby="progressText" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+      <p class="privacy">Answers stay in this browser. Nothing is sent anywhere.</p>
+    </div>
+  </header>
+
+  <main id="questions" class="questions"></main>
+
+  <footer class="finish">
+    <div>
+      <h2>Ready to report back?</h2>
+      <p>Copy your answers, then paste the block into OpenCode.</p>
+    </div>
+    <div class="finish-actions">
+      <button id="copyButton" class="primary" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        <span id="copyLabel">Copy answers</span>
+      </button>
+      <span class="hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+    </div>
+    <p id="copyNote" class="copy-note" aria-live="polite"></p>
+  </footer>
+
+  <p class="colophon">Static page · no server · no telemetry · answers saved only in this browser</p>
+</div>
+
+<dialog id="fallback">
+  <h2>Copy manually</h2>
+  <p id="fallbackHint">The browser blocked the clipboard. The answers are selected below — press Ctrl/Cmd+C to copy them.</p>
+  <textarea id="fallbackText" readonly></textarea>
+  <div class="dialog-actions">
+    <p id="fallbackStatus" class="dialog-status" aria-live="polite"></p>
+    <button id="fallbackRetry" class="secondary" type="button">Try copy again</button>
+    <form method="dialog">
+      <button class="secondary" type="submit">Close</button>
+    </form>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script id="grill-data" type="application/json">
+{
+  "demo": true,
+  "topic": "Designing a tiny offline-first notes app",
+  "round": 1,
+  "intro": "A preview of the page the agent builds for each round. Answer the questions below, then copy the block at the bottom and paste it into OpenCode.",
+  "questions": [
+    {
+      "title": "Where should the local source of truth live?",
+      "body": "The app has to work offline and sync later.\n\n- **IndexedDB** keeps the data in the browser and needs no native shell.\n- **A local SQLite file** is more capable but ties the app to a desktop wrapper.\n\nWhich constraint wins?",
+      "recommendation": "Start with IndexedDB. It keeps the first version web-only, and the sync layer can treat it as an adapter later.",
+      "options": ["IndexedDB", "Local SQLite file", "Keep it in memory for now"]
+    },
+    {
+      "title": "Who wins when two edits collide?",
+      "body": "Two devices edit the same note while offline. Pick the first rule, not the eventual perfect one.",
+      "recommendation": "Last-write-wins per field, with a conflict log the user can inspect. It is boring, predictable, and reversible.",
+      "options": ["Last write wins", "Merge per field", "Ask the user to resolve every conflict"]
+    },
+    {
+      "title": "What is explicitly out of scope for v1?",
+      "body": "Name the thing you are most tempted to add but will not build yet.",
+      "recommendation": "Real-time collaborative editing. Sync can be eventual in v1; live cursors and presence can wait.",
+      "options": ["Real-time collaboration", "File attachments", "End-to-end encryption"]
+    }
+  ]
+}
+</script>
+
+<script>
+(() => {
+  "use strict";
+
+  const ACCEPT = "Yes — go with your recommendation.";
+  const $ = (selector) => document.querySelector(selector);
+
+  const dataEl = $("#grill-data");
+  const listEl = $("#questions");
+  const roundBadge = $("#roundBadge");
+  const topicEl = $("#topic");
+  const introEl = $("#intro");
+  const demoBanner = $("#demoBanner");
+  const progressText = $("#progressText");
+  const progressPercent = $("#progressPercent");
+  const progressBar = $("#progressBar");
+  const copyButton = $("#copyButton");
+  const copyLabel = $("#copyLabel");
+  const copyNote = $("#copyNote");
+  const toastEl = $("#toast");
+  const fallback = $("#fallback");
+  const fallbackText = $("#fallbackText");
+  const fallbackHint = $("#fallbackHint");
+  const fallbackStatus = $("#fallbackStatus");
+  const fallbackRetry = $("#fallbackRetry");
+
+  let data;
+  try {
+    data = JSON.parse(dataEl.textContent);
+  } catch (error) {
+    showFatal("This page has no valid question data. Rebuild it from the round JSON.");
+    return;
+  }
+
+  if (!data || typeof data !== "object" || !Array.isArray(data.questions) || data.questions.length === 0) {
+    showFatal("This page has no questions. Rebuild it from the round JSON.");
+    return;
+  }
+
+  const questions = data.questions;
+  const textareas = [];
+  const statuses = [];
+  const recButtons = [];
+  const storageKey = "grill-me-gui:" + location.pathname;
+  let allowPartial = false;
+  let toastTimer = 0;
+  let copyResetTimer = 0;
+
+  document.title = "Grill Me — Round " + data.round + " — " + data.topic;
+  roundBadge.textContent = "Round " + data.round;
+  topicEl.textContent = data.topic;
+  if (data.intro) {
+    introEl.textContent = data.intro;
+  } else {
+    introEl.hidden = true;
+  }
+  if (data.demo) {
+    demoBanner.hidden = false;
+  }
+
+  const saved = loadSaved();
+  questions.forEach((question, index) => {
+    listEl.append(buildQuestion(question, index, saved[index]));
+  });
+
+  updateProgress();
+  bindActions();
+
+  function showFatal(message) {
+    const box = document.createElement("div");
+    box.className = "fatal";
+    const heading = document.createElement("h2");
+    heading.textContent = "This page could not load";
+    const body = document.createElement("p");
+    body.textContent = message;
+    box.append(heading, body);
+    listEl.append(box);
+    copyButton.disabled = true;
+    copyLabel.textContent = "Nothing to copy";
+  }
+
+  function buildQuestion(question, index, savedValue) {
+    const number = index + 1;
+    const card = document.createElement("section");
+    card.className = "question";
+    card.id = "q-" + number;
+
+    const textarea = document.createElement("textarea");
+    textarea.id = "answer-" + number;
+    textarea.rows = 3;
+    textarea.placeholder = question.placeholder || "Type your answer…";
+    textarea.value = typeof savedValue === "string" ? savedValue : "";
+
+    const status = document.createElement("span");
+    status.className = "q-status";
+
+    const head = document.createElement("div");
+    head.className = "q-head";
+    const numberBadge = document.createElement("span");
+    numberBadge.className = "q-number";
+    numberBadge.textContent = "Q" + number;
+    const title = document.createElement("h2");
+    title.className = "q-title";
+    title.textContent = question.title;
+    head.append(numberBadge, title);
+    card.append(head);
+
+    if (question.body) {
+      const body = document.createElement("div");
+      body.className = "q-body";
+      renderRichText(String(question.body), body);
+      card.append(body);
+    }
+
+    let useButton = null;
+    let useArmed = false;
+    let useArmTimer = 0;
+
+    if (question.recommendation) {
+      const recommendation = document.createElement("div");
+      recommendation.className = "recommendation";
+      const label = document.createElement("div");
+      label.className = "rec-label";
+      label.textContent = "Recommended answer";
+      const text = document.createElement("p");
+      text.className = "rec-text";
+      appendInline(text, question.recommendation);
+      useButton = document.createElement("button");
+      useButton.type = "button";
+      useButton.className = "use-rec";
+      useButton.title = "Fill in: " + ACCEPT;
+      useButton.addEventListener("click", () => {
+        const current = textarea.value.trim();
+        if (current && current !== ACCEPT && !useArmed) {
+          useArmed = true;
+          useButton.textContent = "Replace answer?";
+          toast("Click again to replace your draft");
+          window.clearTimeout(useArmTimer);
+          useArmTimer = window.setTimeout(() => {
+            useArmed = false;
+            updateRecommendationButton();
+          }, 3000);
+          return;
+        }
+        useArmed = false;
+        window.clearTimeout(useArmTimer);
+        textarea.value = ACCEPT;
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        textarea.focus();
+        toast("Recommendation filled in");
+      });
+      recommendation.append(label, text, useButton);
+      card.append(recommendation);
+    }
+
+    if (Array.isArray(question.options) && question.options.length) {
+      const options = document.createElement("div");
+      options.className = "options";
+      const label = document.createElement("span");
+      label.className = "options-label";
+      label.textContent = "Choices";
+      options.append(label);
+      question.options.forEach((option) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "option";
+        button.textContent = option;
+        button.addEventListener("click", () => {
+          textarea.value = option;
+          textarea.dispatchEvent(new Event("input", { bubbles: true }));
+          textarea.focus();
+        });
+        options.append(button);
+      });
+      card.append(options);
+    }
+
+    const answer = document.createElement("div");
+    answer.className = "answer";
+    const label = document.createElement("label");
+    label.className = "answer-label";
+    label.htmlFor = textarea.id;
+    const labelText = document.createElement("span");
+    labelText.textContent = "Your answer";
+    label.append(labelText, status);
+    answer.append(label, textarea);
+    card.append(answer);
+
+    textarea.addEventListener("input", () => {
+      if (useButton) {
+        useArmed = false;
+        window.clearTimeout(useArmTimer);
+      }
+      autoGrow(textarea);
+      updateStatus();
+      updateProgress();
+      updateRecommendationButton();
+      allowPartial = false;
+      copyNote.textContent = "";
+      copyNote.classList.remove("warn");
+      saveState();
+    });
+
+    textareas.push(textarea);
+    statuses.push(status);
+    recButtons.push(useButton);
+    updateStatus();
+    updateRecommendationButton();
+    requestAnimationFrame(() => autoGrow(textarea));
+
+    return card;
+  }
+
+  function updateStatus() {
+    textareas.forEach((textarea, index) => {
+      const answered = textarea.value.trim().length > 0;
+      const status = statuses[index];
+      status.textContent = answered ? "Answered" : "Unanswered";
+      status.classList.toggle("answered", answered);
+    });
+  }
+
+  function updateRecommendationButton() {
+    textareas.forEach((textarea, index) => {
+      const button = recButtons[index];
+      if (!button) return;
+      const applied = textarea.value.trim() === ACCEPT;
+      button.textContent = applied ? "Applied ✓" : "Use this answer";
+      button.classList.toggle("applied", applied);
+    });
+  }
+
+  function updateProgress() {
+    const total = textareas.length;
+    const answered = textareas.reduce((count, textarea) => {
+      return count + (textarea.value.trim() ? 1 : 0);
+    }, 0);
+    const percent = total ? Math.round((answered / total) * 100) : 0;
+    progressText.textContent = answered + " of " + total + " answered";
+    progressPercent.textContent = percent + "%";
+    progressBar.style.width = percent + "%";
+    progressBar.parentElement.setAttribute("aria-valuenow", String(percent));
+    if (answered === total && total > 0) {
+      copyNote.textContent = "";
+      copyNote.classList.remove("warn");
+    }
+  }
+
+  function autoGrow(textarea) {
+    textarea.style.height = "auto";
+    textarea.style.height = Math.max(textarea.scrollHeight, 112) + "px";
+  }
+
+  function renderRichText(text, container) {
+    const blocks = text.split(/\n{2,}/);
+    blocks.forEach((block) => {
+      const lines = block.split("\n");
+      const hasContent = lines.some((line) => line.trim().length > 0);
+      if (!hasContent) return;
+
+      const isList = lines.every((line) => {
+        const trimmed = line.trim();
+        return trimmed === "" || /^[-*]\s+/.test(trimmed);
+      });
+      const isOrderedList = lines.every((line) => {
+        const trimmed = line.trim();
+        return trimmed === "" || /^\d+[.)]\s+/.test(trimmed);
+      });
+
+      if (isList || isOrderedList) {
+        const list = document.createElement(isOrderedList ? "ol" : "ul");
+        const marker = isOrderedList ? /^\d+[.)]\s+/ : /^[-*]\s+/;
+        lines.forEach((line) => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+          const item = document.createElement("li");
+          appendInline(item, trimmed.replace(marker, ""));
+          list.append(item);
+        });
+        container.append(list);
+        return;
+      }
+
+      const paragraph = document.createElement("p");
+      lines.forEach((line, index) => {
+        if (index > 0) paragraph.append(document.createElement("br"));
+        appendInline(paragraph, line);
+      });
+      container.append(paragraph);
+    });
+  }
+
+  function appendInline(parent, text) {
+    const pattern = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parent.append(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+      const token = match[0];
+      if (token.startsWith("**")) {
+        const strong = document.createElement("strong");
+        strong.textContent = token.slice(2, -2);
+        parent.append(strong);
+      } else {
+        const code = document.createElement("code");
+        code.textContent = token.slice(1, -1);
+        parent.append(code);
+      }
+      lastIndex = pattern.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      parent.append(document.createTextNode(text.slice(lastIndex)));
+    }
+  }
+
+  function loadSaved() {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function saveState() {
+    const values = {};
+    textareas.forEach((textarea, index) => {
+      if (textarea.value.trim()) values[index] = textarea.value;
+    });
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(values));
+    } catch (error) {
+      // Storage can be unavailable on file:// in some browsers. The page still works.
+    }
+  }
+
+  function bindActions() {
+    copyButton.addEventListener("click", handleCopy);
+    fallbackRetry.addEventListener("click", () => {
+      const ok = legacyCopy(fallbackText.value);
+      fallbackStatus.textContent = ok
+        ? "Copied. You can close this dialog and paste into OpenCode."
+        : "Still blocked. Select the text and press Ctrl/Cmd+C.";
+      fallbackStatus.classList.toggle("ok", ok);
+      if (ok) toast("Copied — paste into OpenCode");
+    });
+    dialogBackdropClose();
+    document.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        if (fallback.open) return;
+        event.preventDefault();
+        handleCopy();
+      }
+    });
+  }
+
+  function handleCopy() {
+    const missing = textareas
+      .map((textarea, index) => (textarea.value.trim() ? -1 : index))
+      .filter((index) => index >= 0);
+
+    if (missing.length && !allowPartial) {
+      allowPartial = true;
+      copyNote.classList.add("warn");
+      const names = missing.slice(0, 4).map((index) => "Q" + (index + 1));
+      const suffix = missing.length > 4 ? " +" + (missing.length - 4) + " more" : "";
+      copyNote.textContent =
+        missing.length +
+        (missing.length === 1 ? " question is" : " questions are") +
+        " unanswered: " +
+        names.join(", ") +
+        suffix +
+        ". Click Copy again to copy anyway, or answer them above.";
+      const first = document.getElementById("q-" + (missing[0] + 1));
+      if (first) {
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        first.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+      }
+      window.setTimeout(() => textareas[missing[0]].focus({ preventScroll: true }), 350);
+      return;
+    }
+
+    copyAnswers();
+  }
+
+  async function copyAnswers() {
+    const text = buildAnswerMarkdown();
+    copyButton.disabled = true;
+    const copied = await writeClipboard(text);
+    copyButton.disabled = false;
+
+    if (!copied) {
+      openFallback(text);
+      return;
+    }
+
+    allowPartial = false;
+    saveState();
+    copyNote.textContent = "Copied. Paste the block into OpenCode.";
+    copyNote.classList.remove("warn");
+    copyLabel.textContent = "Copied!";
+    copyButton.classList.add("copied");
+    toast("Copied — paste into OpenCode");
+    window.clearTimeout(copyResetTimer);
+    copyResetTimer = window.setTimeout(() => {
+      copyLabel.textContent = "Copy answers";
+      copyButton.classList.remove("copied");
+    }, 2200);
+  }
+
+  function buildAnswerMarkdown() {
+    const lines = ["# Grill Me — Round " + data.round + " answers", ""];
+    if (data.topic) {
+      lines.push("**Topic:** " + data.topic, "");
+    }
+    questions.forEach((question, index) => {
+      lines.push("## Q" + (index + 1) + " — " + question.title, "");
+      const answer = textareas[index].value.trim();
+      lines.push(answer || "_(unanswered)_", "");
+    });
+    return lines.join("\n").trimEnd() + "\n";
+  }
+
+  async function writeClipboard(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (error) {
+      // Fall through to execCommand.
+    }
+    return legacyCopy(text);
+  }
+
+  function legacyCopy(text) {
+    const helper = document.createElement("textarea");
+    helper.value = text;
+    helper.setAttribute("readonly", "");
+    helper.style.position = "fixed";
+    helper.style.top = "0";
+    helper.style.left = "0";
+    helper.style.width = "1px";
+    helper.style.height = "1px";
+    helper.style.opacity = "0";
+    helper.style.pointerEvents = "none";
+    document.body.append(helper);
+    helper.focus();
+    helper.select();
+    helper.setSelectionRange(0, helper.value.length);
+    let ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (error) {
+      ok = false;
+    }
+    helper.remove();
+    return ok;
+  }
+
+  function openFallback(text) {
+    fallbackText.value = text;
+    fallbackStatus.textContent = "";
+    fallbackStatus.classList.remove("ok");
+    fallbackHint.textContent =
+      "The browser blocked the clipboard. The answers are selected below — press Ctrl/Cmd+C to copy them.";
+    if (typeof fallback.showModal === "function") {
+      fallback.showModal();
+    } else {
+      fallback.setAttribute("open", "");
+    }
+    requestAnimationFrame(() => {
+      fallbackText.focus();
+      fallbackText.select();
+    });
+  }
+
+  function dialogBackdropClose() {
+    fallback.addEventListener("click", (event) => {
+      if (event.target === fallback) fallback.close();
+    });
+  }
+
+  function toast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add("show");
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      toastEl.classList.remove("show");
+    }, 2200);
+  }
+})();
+</script>
+</body>
+</html>

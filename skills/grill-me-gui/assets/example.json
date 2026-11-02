@@ -1,0 +1,25 @@
+{
+  "topic": "Designing a bookmarking CLI",
+  "round": 1,
+  "intro": "Round 1 settles the storage shape and the first user-facing workflow. Answer in the page, then copy the block at the bottom back into OpenCode.",
+  "questions": [
+    {
+      "title": "Where does the bookmark database live?",
+      "body": "The tool should work on a laptop without a daemon or an account.\n\n- **A single SQLite file** is easy to back up and query.\n- **A folder of JSON files** is friendlier to hand-editing and git.\n- **The browser profile** would reuse existing bookmarks but ties the CLI to a browser.\n\nWhich trade-off should drive v1?",
+      "recommendation": "Use a single SQLite file under the XDG data directory. It keeps queries and migrations simple, and a JSON export can be added later.",
+      "options": ["Single SQLite file", "Folder of JSON files", "Read the browser profile"]
+    },
+    {
+      "title": "What is the first command a new user runs?",
+      "body": "The onboarding path decides what the README teaches first.\n\n- `bookmark add <url>` is explicit and scriptable.\n- `bookmark save` reading from the clipboard is faster for interactive use.\n- `bookmark import` is the quickest way to bring an existing collection.\n\nPick one primary path for v1; the others can follow.",
+      "recommendation": "Make `bookmark add <url>` the primary path. It is predictable, testable, and works in scripts; clipboard convenience can be a later alias.",
+      "options": ["bookmark add <url>", "bookmark save from clipboard", "bookmark import"]
+    },
+    {
+      "title": "What stays out of v1?",
+      "body": "Name the feature you are most tempted to build but will postpone. This keeps the first release small.",
+      "recommendation": "Full-text search and tagging. Start with URL, title, and timestamps; add a search index once the capture flow is solid.",
+      "options": ["Full-text search", "Tags and collections", "Sync across machines"]
+    }
+  ]
+}
