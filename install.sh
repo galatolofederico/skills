@@ -108,6 +108,11 @@ if [ -f "$tg_source" ]; then
     *":$HOME/.local/bin:"*) ;;
     *) echo "warning: $HOME/.local/bin is not in PATH; add it to use tg" >&2 ;;
   esac
+
+  existing_tg="$(type -P tg 2>/dev/null || true)"
+  if [ -n "$existing_tg" ] && [ "$existing_tg" != "$tg_dest" ]; then
+    echo "warning: another tg is already in PATH at $existing_tg" >&2
+  fi
 else
   echo "warning: bin/tg not found; skipping the Telegram CLI" >&2
 fi
