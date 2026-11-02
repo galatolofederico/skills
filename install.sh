@@ -14,7 +14,8 @@ Copy the skills in ./skills into DEST (default: ~/.config/opencode/skills)
 and install bin/tg to ~/.local/bin/tg.
 
 Options:
-  --force      Replace skills already present in DEST and the tg binary.
+  --force      Update skills already installed in either known root, and
+               replace the tg binary.
   -h, --help   Show this help.
 EOF
 }
@@ -62,11 +63,6 @@ for skill_dir in "$source_dir"/*/; do
   name="$(basename "$skill_dir")"
   destination="$dest/$name"
 
-  if [ -e "$destination" ] && [ "$force" -ne 1 ]; then
-    echo "skip $name: already installed at $destination (use --force to replace)"
-    continue
-  fi
-
   duplicate=""
   for root in "${known_roots[@]}"; do
     root="$(normalize_dir "$root")"
@@ -76,18 +72,33 @@ for skill_dir in "$source_dir"/*/; do
     fi
   done
 
-  if [ -n "$duplicate" ] && [ "$force" -ne 1 ]; then
-    echo "skip $name: already installed at $duplicate (use --force to install a second copy)"
+  if [ -e "$destination" ] && [ -n "$duplicate" ]; then
+    echo "error: $name exists in both $destination and $duplicate; remove one copy before installing" >&2
+    continue
+  fi
+
+  if [ -e "$destination" ]; then
+    if [ "$force" -ne 1 ]; then
+      echo "skip $name: already installed at $destination (use --force to update)"
+      continue
+    fi
+    rm -rf "$destination"
+    cp -R "$skill_dir" "$destination"
+    echo "updated $name -> $destination"
     continue
   fi
 
   if [ -n "$duplicate" ]; then
-    echo "warning: $name also exists at $duplicate; installing another copy may create a duplicate skill name" >&2
+    if [ "$force" -ne 1 ]; then
+      echo "skip $name: already installed at $duplicate (use --force to update it there)"
+      continue
+    fi
+    rm -rf "$duplicate"
+    cp -R "$skill_dir" "$duplicate"
+    echo "updated $name -> $duplicate (existing installation root)"
+    continue
   fi
 
-  if [ -e "$destination" ]; then
-    rm -rf "$destination"
-  fi
   cp -R "$skill_dir" "$destination"
   echo "installed $name -> $destination"
 done
@@ -99,9 +110,14 @@ if [ -f "$tg_source" ]; then
   if [ -e "$tg_dest" ] && [ "$force" -ne 1 ]; then
     echo "skip tg: already installed at $tg_dest (use --force to replace)"
   else
+    if [ -e "$tg_dest" ]; then
+      action="updated"
+    else
+      action="installed"
+    fi
     mkdir -p "$(dirname "$tg_dest")"
     install -m 755 "$tg_source" "$tg_dest"
-    echo "installed tg -> $tg_dest"
+    echo "$action tg -> $tg_dest"
   fi
 
   case ":$PATH:" in

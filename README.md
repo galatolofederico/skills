@@ -49,13 +49,13 @@ The installer copies the four skills into `~/.config/opencode/skills` by default
 ./install.sh ~/.agents/skills
 ```
 
-To replace existing copies in the destination and refresh `~/.local/bin/tg`:
+To update existing copies in place and refresh `~/.local/bin/tg`:
 
 ```bash
 ./install.sh --force
 ```
 
-`--force` only replaces matching skill folders in the destination and the `tg` binary. It does not touch the other skill root. If the same skill name exists in both roots, remove the unwanted copy.
+`--force` updates each skill wherever it is already installed in the two known roots, and refreshes the `tg` binary. If a skill exists in both roots, the installer stops with an error; remove the unwanted copy first.
 
 ### Manual
 
