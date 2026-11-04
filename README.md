@@ -13,6 +13,7 @@ A portable collection of my OpenCode skills. Each skill is a folder with a `SKIL
 └── skills/
     ├── commit/
     ├── phase-orchestrator/
+    ├── plan-creator/
     ├── tg-telegram/
     └── grill-me-gui/
 ```
@@ -23,6 +24,7 @@ A portable collection of my OpenCode skills. Each skill is a folder with a `SKIL
 |---|---|---|
 | [`commit`](skills/commit/SKILL.md) | model-invoked | Creates focused git commits from the current work, using the conversation as context. |
 | [`phase-orchestrator`](skills/phase-orchestrator/SKILL.md) | user-invoked | Builds a ready-to-paste prompt for an orchestrator that runs a phased plan. |
+| [`plan-creator`](skills/plan-creator/SKILL.md) | user-invoked | Creates a detailed `PLAN.md` and a phased `TASKS.md`, with test-writing tasks and a test-and-verify checkpoint in every phase. |
 | [`tg-telegram`](skills/tg-telegram/SKILL.md) | model-invoked | Sends and receives Telegram messages through the `tg` CLI. |
 | [`grill-me-gui`](skills/grill-me-gui/SKILL.md) | user-invoked | Runs the relentless `grilling` interview, but delivers each round as a local static web page with a copy-answers button. |
 
@@ -43,7 +45,7 @@ cd skills
 ./install.sh
 ```
 
-The installer copies the four skills into `~/.config/opencode/skills` by default, installs the `tg` CLI to `~/.local/bin/tg` when it is not already there, and skips any skill already present in either skill root. To choose the other skill root:
+The installer copies the skills into `~/.config/opencode/skills` by default, installs the `tg` CLI to `~/.local/bin/tg` when it is not already there, and skips any skill already present in either skill root. To choose the other skill root:
 
 ```bash
 ./install.sh ~/.agents/skills
@@ -91,11 +93,12 @@ Make sure `~/.local/bin` is in `PATH`. Then run `tg init` once; it stores the bo
 - `commit` — `git` in `PATH`.
 - `tg-telegram` — `tg` in `PATH` (installed by `install.sh`), plus `curl` and `jq`. Run `tg init` once to create `~/.tg.conf`.
 - `phase-orchestrator` — no extra tooling; its generated prompt can use `tg-telegram` for notifications.
+- `plan-creator` — no extra tooling.
 - `grill-me-gui` — Python 3 and a browser. The generated pages are static and need no server. It also uses the `grilling` skill from `mattpocock/skills`; install that separately if it is not already available.
 
 ## Invocation
 
-`commit` and `tg-telegram` are model-invoked, so the agent can reach for them when the task matches. `phase-orchestrator` and `grill-me-gui` are user-invoked: invoke them explicitly by name.
+`commit` and `tg-telegram` are model-invoked, so the agent can reach for them when the task matches. `phase-orchestrator`, `plan-creator`, and `grill-me-gui` are user-invoked: invoke them explicitly by name.
 
 ## Updating
 
