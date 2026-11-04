@@ -1,6 +1,6 @@
 ---
 name: phase-orchestrator
-description: Build a project-specific prompt for an orchestrator agent that runs a phased plan with one subagent per phase, verifies the build, commits each phase, and sends Telegram updates. Use when the user wants a ready-to-paste orchestrator prompt rather than immediate execution.
+description: Build a project-specific prompt for an orchestrator agent that runs a phased plan with one subagent per phase, verifies the build, commits each phase with the configured commit policy, and sends Telegram updates. Use when the user wants a ready-to-paste orchestrator prompt rather than immediate execution.
 argument-hint: "Project or plan to build the orchestrator prompt for"
 disable-model-invocation: true
 ---
@@ -49,10 +49,13 @@ Ask for:
    verification is applicable. Default for a manual with a Makefile:
    `make -C <plan-directory> pdf`; for code, ask or use the repository's documented test
    command.
-5. **Commit policy**: one commit per completed phase; scope to stage; message prefix;
-   whether empty/no-op commits are allowed. Default: one commit per phase, stage only
-   the plan's directory, prefix `docs(manual)` for a manual and `docs` otherwise,
-   allow a trace commit when a phase produces no changes.
+5. **Commit policy**: choose **one commit per completed phase** or **multiple focused
+   commits per phase**; scope to stage; message prefix; whether empty/no-op commits are
+   allowed. For multiple commits, also confirm the grouping rule (default: one commit per
+   coherent concern, keeping tests with the code they cover); every changed path must
+   belong to exactly one commit. Default: one commit per phase, stage only the
+   plan's directory, prefix `docs(manual)` for a manual and `docs` otherwise, allow a
+   trace commit when a phase produces no changes.
 6. **Notifications**: whether to use Telegram, another channel, or none. Default:
    Telegram through the `tg-telegram` skill, one message per completed phase plus start,
    block, and final messages.
@@ -77,8 +80,10 @@ Present the resolved contract as a short table, for example:
 | Language | Italian |
 | Delivery | chat |
 
-Ask the user to confirm or correct the table. The contract is complete only when every
-material choice is explicit and confirmed.
+Ask the user to confirm or correct the table. Use `one per phase` or `multiple per
+phase` in the Commit row; when multiple, record the grouping rule and the per-commit
+message format. The contract is complete only when every material choice is explicit
+and confirmed.
 
 ## 2. Generate the prompt
 
@@ -100,7 +105,7 @@ List exact paths:
 - specification, index, style guide, or other files the phase subagents must read;
 - repository root;
 - verification command;
-- commit scope;
+- commit scope, shape, and message format;
 - notification channel.
 
 Do not invent paths. Use placeholders only for values the orchestrator must fill at
@@ -117,7 +122,8 @@ Include the user's contract and these defaults:
 - the only verification is the configured build/test command;
 - on build failure, dispatch a dedicated fix subagent with the tail of the log; never
   fix the build manually; stop after the configured number of attempts;
-- commit after each completed phase, staging only the configured scope;
+- commit after each completed phase passes verification, using the configured commit
+  shape (one commit or multiple focused commits) and staging only the configured scope;
 - send a Telegram message after each completed phase, using the `tg-telegram` skill;
 - do not push, amend, rebase, reset, clean, or rewrite history;
 - do not modify application code, configuration, or fixtures unless the contract
@@ -145,28 +151,56 @@ For each phase:
 1. Build a subagent prompt from the template below, filled with the phase number,
    title, plan path, scope, and project-specific constraints.
 2. Dispatch one `general` subagent in foreground with `background: false`.
-3. Read only `STATUS`, `SUMMARY`, `FILES`, `CHECKS`, and `BLOCKER`.
+3. Read only `STATUS`, `SUMMARY`, `FILES`, `CHECKS`, and `BLOCKER`, plus `COMMITS`
+   when multiple commits are configured.
 4. If `BLOCKED`, send the block notification and stop.
 5. Run the configured build/test command.
 6. If verification is not applicable, record that explicitly and continue.
 7. If verification fails, dispatch the build-fix subagent, then rerun the verification.
 8. If verification still fails after the allowed attempts, notify and stop.
-9. Stage only the configured commit scope.
-10. Commit with the configured message format.
-11. Send the phase-completion notification with the short commit hash and the next
-    phase.
+9. Stage and commit the verified phase according to the configured commit policy:
+   - one commit per phase: stage the configured scope and create one commit;
+   - multiple commits per phase: validate that the subagent's `COMMITS` plan covers every
+     changed path in scope before creating any commit. If it does, stage each group's
+     explicit paths and create the commits in order; if it is missing or incomplete,
+     create one phase commit from the configured scope and note the fallback in the
+     notification.
+10. Record every commit hash for the phase.
+11. Send the phase-completion notification with the short commit hash or hashes and the
+    next phase.
 12. Start the next phase only after the notification.
 
 ### Commit policy
 
-Specify the exact commands and guardrails:
+Specify the configured shape and its exact commands and guardrails.
 
-- `git add <scope>` only; never `git add -A` or `git commit -a`;
+**One commit per phase** (default):
+
+- `git add -- <scope>` only; never `git add -A` or `git commit -a`;
 - message format, for example
   `docs(manual): phase N — <phase title>`;
 - empty/no-op commit behavior from the contract;
 - no push;
 - leave unrelated changes untouched and report them.
+
+**Multiple commits per phase**:
+
+- wait until the phase verification passes, then split the verified changes into the
+  configured groups;
+- use the phase subagent's `COMMITS` plan: each entry names a group label and the
+  explicit paths for that commit;
+- validate the plan before creating any commit: every changed path in scope must appear
+  in exactly one group, and every path must be inside the configured scope;
+- use `git status --short` only to check path coverage, not to inspect file contents;
+- stage each group with `git add -- <paths>` and create the commits in the order the
+  subagent reported;
+- keep tests, fixtures, and docs with the code they describe; do not split one behavior
+  change across commits;
+- message format, for example
+  `docs(manual): phase N — <phase title> — <group label>`;
+- if the plan is missing or incomplete, create one commit for the whole phase with the
+  phase-level message and record the fallback in the phase notification;
+- no push; leave unrelated changes untouched and report them.
 
 ### Telegram protocol
 
@@ -174,7 +208,7 @@ Instruct the orchestrator to use the `tg-telegram` skill and `tg status` before 
 message. Include short templates for:
 
 - start;
-- phase completed, with commit hash and next phase;
+- phase completed, with the commit hash or hashes and the next phase;
 - blocked phase, with reason and confirmation that no commit was created;
 - final completion, with the PDF/build artifact and last commit hash.
 
@@ -194,8 +228,12 @@ Include a template with:
 - instruction to run the checks required by the phase;
 - instruction not to commit, not to send Telegram, not to spawn other agents, and not
   to modify out-of-scope code;
+- when the multiple-commit policy is active, instruction to propose a `COMMITS` plan
+  with one line per commit in the form `<group label> | <path>, <path>`, assigning every
+  changed path to exactly one group and keeping tests with the code they cover;
 - requirement to return only:
-  `STATUS`, `SUMMARY`, `FILES`, `CHECKS`, `BLOCKER`.
+  `STATUS`, `SUMMARY`, `FILES`, `CHECKS`, `BLOCKER`, plus `COMMITS` when the
+  multiple-commit policy is active.
 
 ### Build-fix subagent prompt template
 
@@ -223,7 +261,8 @@ Repeat the block conditions:
 Tell the orchestrator to report:
 
 - phases completed;
-- commit hashes and subjects;
+- every commit hash and subject, grouped by phase;
+- any fallback from multiple commits to one phase commit;
 - verification results;
 - notifications sent or failed;
 - deliberately skipped phases or tasks;
